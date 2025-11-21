@@ -3,12 +3,16 @@
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:type="MailApp">
 
-  <Id>33f4e82e-a05f-4103-a301-19cc42795ea0</Id>
+  <Id>12345678-1234-1234-1234-123456789abc</Id>
   <Version>1.0.0.0</Version>
-  <ProviderName>Your Name</ProviderName>
+  <ProviderName>Sortify</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName>Email Classifier</DisplayName>
-  <Description>Classify emails as spam, phishing, or support</Description>
+  <DisplayName DefaultValue="Sortify Email Classifier"/>
+  <Description DefaultValue="Classify emails as spam or not spam using AI"/>
+  <IconUrl DefaultValue="https://aflahsalim.github.io/sortify/icon.png"/>
+  <HighResolutionIconUrl DefaultValue="https://aflahsalim.github.io/sortify/icon.png"/>
+
+  <SupportUrl DefaultValue="https://aflahsalim.github.io/sortify/"/>
 
   <Hosts>
     <Host Name="Mailbox"/>
@@ -23,11 +27,10 @@
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
-        <SourceLocation DefaultValue="http://127.0.0.1:8000/classify"/>
-        <RequestedHeight>250</RequestedHeight>
+        <SourceLocation DefaultValue="https://aflahsalim.github.io/sortify/index.html"/>
       </DesktopSettings>
     </Form>
   </FormSettings>
 
-  <Permissions>ReadItem</Permissions>
+  <Permissions>ReadWriteItem</Permissions>
 </OfficeApp>
