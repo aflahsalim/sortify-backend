@@ -4,14 +4,13 @@
            xsi:type="MailApp">
 
   <Id>12345678-1234-1234-1234-123456789abc</Id>
-  <Version>1.0.0.0</Version>
+  <Version>1.0.1.0</Version>
   <ProviderName>Sortify</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Sortify Email Classifier"/>
   <Description DefaultValue="Classify emails as spam or not spam using AI"/>
   <IconUrl DefaultValue="https://aflahsalim.github.io/sortify/icon.png"/>
   <HighResolutionIconUrl DefaultValue="https://aflahsalim.github.io/sortify/icon.png"/>
-
   <SupportUrl DefaultValue="https://aflahsalim.github.io/sortify/"/>
 
   <Hosts>
