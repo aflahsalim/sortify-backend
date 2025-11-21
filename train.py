@@ -1,34 +1,23 @@
 import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import Pipeline
 import joblib
 
-# Sample training data
-data = {
-    "text": [
-        "Congratulations! You've won a prize!",
-        "Get rich quick with crypto!",
-        "Your account has been suspended",
-        "Hi team, meeting at 10 AM",
-        "Thanks for your feedback",
-        "Your order has been shipped"
-    ],
-    "label": ["spam", "spam", "spam", "ham", "ham", "ham"]
-}
+# Load your dataset
+df = pd.read_csv("email dataset.csv")  # make sure the filename matches exactly
 
-df = pd.DataFrame(data)
+# Create pipeline: vectorizer + classifier
+model = Pipeline([
+    ('vectorizer', TfidfVectorizer()),
+    ('classifier', MultinomialNB())
+])
 
-# Vectorize text
-vectorizer = CountVectorizer()
-X = vectorizer.fit_transform(df["text"])
-y = df["label"]
-
-# Train model
-model = MultinomialNB()
-model.fit(X, y)
+# Train the model
+model.fit(df['text'], df['label'])
 
 # Save model and vectorizer
-joblib.dump(model, "model.pkl")
-joblib.dump(vectorizer, "vectorizer.pkl")
+joblib.dump(model, 'model.pkl')
+joblib.dump(model.named_steps['vectorizer'], 'vectorizer.pkl')
 
-print("Model and vectorizer saved.")
+print("Model and vectorizer saved successfully.")
