@@ -31,7 +31,9 @@ class Email(BaseModel):
 @app.post("/classify")
 def classify(email: Email):
     try:
+        # Transform the input text using the vectorizer
         X = vectorizer.transform([email.text])
+        # Predict using the trained model
         prediction = model.predict(X)[0]
         return {"category": prediction}
     except Exception as e:
