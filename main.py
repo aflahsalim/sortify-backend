@@ -12,7 +12,7 @@ app = FastAPI()
 # Enable CORS for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # You can restrict to your frontend domain later
+    allow_origins=["*"],  # Restrict later to your frontend domain
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -30,9 +30,18 @@ async def classify_email(request: EmailRequest):
     # Predict label and confidence score
     label = model.predict([email_text])[0]
     proba = model.predict_proba([email_text])[0]
-    score = round(max(proba), 2)  # confidence of predicted label
+    score = round(max(proba), 2)
 
-    # Optional analysis details (can be expanded later)
+    # Map labels to display + color
+    label_map = {
+        "ham": {"display": "Ham (Safe)", "color": "green"},
+        "spam": {"display": "Spam", "color": "orange"},
+        "phishing": {"display": "Phishing Risk", "color": "red"},
+        "support": {"display": "Support Ticket", "color": "blue"},
+    }
+    mapped = label_map.get(label, {"display": label, "color": "gray"})
+
+    # Optional analysis details
     sender_reputation = "Low / Unverified" if "outlook.com" in email_text else "Trusted"
     link_analysis = "Suspicious Redirects" if "http" in email_text else "No Links Found"
     content_check = "Urgency Patterns" if any(w in email_text.lower() for w in ["urgent", "verify", "reset", "click"]) else "Normal Language"
@@ -41,6 +50,8 @@ async def classify_email(request: EmailRequest):
     return {
         "score": score,
         "label": label,
+        "display": mapped["display"],
+        "color": mapped["color"],
         "sender": sender_reputation,
         "links": link_analysis,
         "content": content_check,
