@@ -12,7 +12,7 @@ app = FastAPI()
 # Enable CORS for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Restrict later to your frontend domain
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -20,9 +20,8 @@ app.add_middleware(
 # Define request schema
 class EmailRequest(BaseModel):
     text: str
-    attachment: str = "Unknown"  # Optional field from frontend
+    attachment: str = "Unknown"
 
-# Define classification endpoint
 @app.post("/classify")
 async def classify_email(request: EmailRequest):
     email_text = request.text
@@ -41,19 +40,10 @@ async def classify_email(request: EmailRequest):
     }
     mapped = label_map.get(label, {"display": label, "color": "gray"})
 
-    # Optional analysis details
-    sender_reputation = "Low / Unverified" if "outlook.com" in email_text else "Trusted"
-    link_analysis = "Suspicious Redirects" if "http" in email_text else "No Links Found"
-    content_check = "Urgency Patterns" if any(w in email_text.lower() for w in ["urgent", "verify", "reset", "click"]) else "Normal Language"
-
-    # Return response to frontend
     return {
         "score": score,
         "label": label,
         "display": mapped["display"],
         "color": mapped["color"],
-        "sender": sender_reputation,
-        "links": link_analysis,
-        "content": content_check,
         "attachment": request.attachment
     }
