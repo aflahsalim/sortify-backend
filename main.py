@@ -19,15 +19,19 @@ app.add_middleware(
 # Define request schema
 class EmailRequest(BaseModel):
     text: str
-    attachment: str = "Unknown"
+    attachment: str = "No"  # default to "No" if not provided
 
 @app.post("/classify")
 async def classify_email(request: EmailRequest):
-    email_text = request.text
-    label = model.predict([email_text])[0]
-    proba = model.predict_proba([email_text])[0]
+    # Prepare input as a dict for the pipeline
+    input_data = {"text": request.text, "attachment": request.attachment}
+
+    # Predict label and confidence
+    label = model.predict([input_data])[0]
+    proba = model.predict_proba([input_data])[0]
     score = round(max(proba), 2)
 
+    # Map label to display name and color
     label_map = {
         "ham": {"display": "Ham (Safe)", "color": "green"},
         "spam": {"display": "Spam", "color": "orange"},
