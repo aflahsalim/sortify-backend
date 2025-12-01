@@ -1,4 +1,5 @@
 import joblib
+import pandas as pd
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,12 +24,15 @@ class EmailRequest(BaseModel):
 
 @app.post("/classify")
 async def classify_email(request: EmailRequest):
-    # Prepare input as a dict for the pipeline
-    input_data = {"text": request.text, "attachment": request.attachment}
+    # Build a DataFrame with the same column names used in training
+    input_df = pd.DataFrame([{
+        "text": request.text,
+        "Attachment": request.attachment   # must match training column name exactly
+    }])
 
     # Predict label and confidence
-    label = model.predict([input_data])[0]
-    proba = model.predict_proba([input_data])[0]
+    label = model.predict(input_df)[0]
+    proba = model.predict_proba(input_df)[0]
     score = round(max(proba), 2)
 
     # Map label to display name and color
