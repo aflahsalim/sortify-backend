@@ -9,7 +9,7 @@ model = joblib.load("model.pkl")
 
 app = FastAPI()
 
-# Enable CORS for frontend access
+# Enable CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,25 +17,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Define request schema
 class EmailRequest(BaseModel):
     text: str
-    attachment: str = "No"  # default to "No" if not provided
+    attachment: str = "No"
 
 @app.post("/classify")
 async def classify_email(request: EmailRequest):
-    # Build a DataFrame with the same column names used in training
+    # Match training column names exactly: "Text" and "Attachment"
     input_df = pd.DataFrame([{
-        "text": request.text,
-        "Attachment": request.attachment   # must match training column name exactly
+        "Text": request.text,
+        "Attachment": request.attachment
     }])
 
-    # Predict label and confidence
     label = model.predict(input_df)[0]
     proba = model.predict_proba(input_df)[0]
     score = round(max(proba), 2)
 
-    # Map label to display name and color
     label_map = {
         "ham": {"display": "Ham (Safe)", "color": "green"},
         "spam": {"display": "Spam", "color": "orange"},
