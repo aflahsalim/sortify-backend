@@ -1,183 +1,129 @@
-Sortify Backend
+# Sortify Backend
 
-Sortify Backend provides the optional machine‑learning inference service used by the Sortify Outlook add‑in.  
-It receives minimal email‑derived features, runs a lightweight ML model, and returns a risk score and category.  
-The backend is not required for the add‑in to function; local heuristics can be used when the backend is disabled.
+Sortify is an email‑safety classification system designed for Outlook (Web & Desktop).  
+It helps users quickly understand whether an email is Safe, Suspicious, Spam, or Phishing — directly inside the Outlook task pane.
 
----
+The system is composed of two parts:
+1. Sortify Outlook Add‑in (client)
+2. Sortify Backend (optional ML inference service)
 
-## Features
+This repository contains the backend component.
+
+============================================================
+1. WHAT IS SORTIFY?
+============================================================
+
+Sortify is a privacy‑respecting email‑risk detection tool built for Outlook.  
+It analyzes incoming emails using:
+- Local heuristics (built into the add‑in)
+- Optional machine‑learning inference (this backend)
+
+Sortify displays:
+- A risk gauge (0–100)
+- A color‑coded category (Safe, Support, Spam, Phishing)
+- A short analysis panel (links, attachments, urgency, sender reputation)
+- A confirmation popup for forwarding suspicious emails to support
+
+Sortify does NOT:
+- Store email content
+- Log messages
+- Send full emails to external servers
+
+============================================================
+2. ROLE OF THIS REPOSITORY (BACKEND)
+============================================================
+
+This backend provides:
+- A lightweight ML model
+- A simple REST API endpoint
+- A fast scoring pipeline (<500 ms)
+- A privacy‑respecting inference process
+
+The backend is **optional**.  
+If disabled, the add‑in falls back to local heuristics.
+
+============================================================
+3. FEATURES
+============================================================
+
 - Computes a numeric risk score (0–100)
-- Maps results to four categories: **Safe**, **Support**, **Spam**, **Phishing**
-- Accepts minimal JSON payload (links, attachments, urgency, sender domain, text summary)
-- Returns optional confidence and explanation flags
+- Maps results to four categories:
+  Safe, Support, Spam, Phishing
+- Accepts minimal JSON payload:
+  sender domain, link count, attachment count, urgency score, text summary
+- Returns optional:
+  confidence, explanation flags
 - Lightweight, fast, and easy to run locally
 
----
+============================================================
+4. INSTALLATION & SETUP
+============================================================
 
-## Installation & Setup
-
-### 1. Clone the repository
-```bash
+1. Clone the repository:
 git clone https://github.com/yourusername/sortify-backend
 cd sortify-backend
-2. Install dependencies
-bash
+
+2. Install dependencies:
 pip install -r requirements.txt
-3. Run the backend server
-Depending on your implementation:
 
-bash
+3. Run the backend server (choose one):
 uvicorn main:app --reload
-or
-
-bash
+OR
 python app.py
-4. Connect the add‑in
-Inside the Sortify add‑in settings, enter your backend URL:
 
-Code
+4. Connect the add‑in:
+Enter this URL inside the Sortify add‑in settings:
 http://localhost:8000/api/infer
-If the backend is unreachable, the add‑in automatically falls back to local heuristics.
 
-API Contract
+If unreachable → fallback to local heuristics.
+
+============================================================
+5. API CONTRACT
+============================================================
+
 POST /api/infer
-Request JSON fields:
 
-sender_domain
+Request JSON:
+- sender_domain
+- body_text or summary
+- has_links
+- link_count
+- has_attachments
+- attachment_count
+- urgency_score
 
-body_text or summary
-
-has_links
-
-link_count
-
-has_attachments
-
-attachment_count
-
-urgency_score
-
-Response JSON fields:
-
-risk_score (0–100)
-
-category (Safe | Support | Spam | Phishing)
-
-confidence (optional)
-
-explanation (optional)
-
-Tech Stack
-Python 3.x
-
-FastAPI or Flask
-
-Scikit‑learn (or similar)
-
-Purpose
-To provide a simple, optional ML inference service that enhances Sortify’s classification accuracy while respecting privacy and operating within the constraints of the Outlook add‑in environment.
+Response JSON:
+- risk_score (0–100)
+- category (Safe | Support | Spam | Phishing)
+- confidence (optional)
+- explanation (optional)
 
 ============================================================
-README 2 — sortify-addin
+6. MODEL DETAILS
 ============================================================
 
-Sortify Outlook Add‑in
-Sortify is an Outlook add‑in that evaluates the safety of incoming emails and presents the result directly inside the Outlook task pane.
-It uses local heuristics and, optionally, a Python backend to classify emails into four categories: Safe, Support, Spam, and Phishing.
+- Trained offline using labeled email samples
+- Lightweight scikit‑learn model
+- Loaded into memory at startup
+- No continuous training pipeline
+- No email content stored or logged
 
-Installation & Setup
-1. Download the Manifest File
-Download the file:
+============================================================
+7. PRIVACY & SECURITY
+============================================================
 
-Code
-manifest.xml
-2. Install the Add‑in in Outlook
-Outlook Web
-Open Outlook in your browser
+- No email content stored
+- No logs
+- Only minimal metadata processed
+- HTTPS recommended for production
+- Input validation included
 
-Go to Settings → View all Outlook settings
+============================================================
+8. PURPOSE
+============================================================
 
-Navigate to Mail → Customize actions → Add‑ins
+To provide a simple, optional ML inference service that enhances Sortify’s classification accuracy while respecting privacy and operating within Outlook’s constraints.
 
-Select Add a custom add‑in
-
-Choose Add from file
-
-Upload manifest.xml
-
-Outlook Desktop
-Open Outlook
-
-Go to Home → Get Add‑ins
-
-Open My Add‑ins
-
-Scroll to Custom Add‑ins
-
-Select Add from file
-
-Upload manifest.xml
-
-Once installed, Sortify will appear in the Outlook ribbon and task pane.
-
-How to Use
-Open any email in Outlook
-
-Open the Sortify task pane
-
-The add‑in automatically:
-
-Reads available email metadata
-
-Computes a local heuristic score
-
-Or calls the backend (if enabled)
-
-The gauge and analysis panel appear instantly
-
-To escalate an email, click Forward to Support and confirm in the popup
-
-Sortify does not store or log email content.
-
-Optional: Enable Backend Mode
-If you want to use the machine‑learning backend:
-
-Run the Sortify backend locally
-
-Open the add‑in settings
-
-Enter your backend URL (e.g., http://localhost:8000/api/infer)
-
-Save settings
-
-If the backend is unavailable, Sortify automatically falls back to local heuristics.
-
-Features
-Semicircular gauge showing risk percentage and color‑coded category
-
-Analysis panel with:
-
-Sender reputation (Trusted / Unknown)
-
-Link presence
-
-Attachment presence
-
-Urgency level
-
-Optional backend inference for ML‑based scoring
-
-Confirmation popup for forwarding emails to support
-
-Graceful fallback values when data is missing
-
-Tech Stack
-HTML, CSS, JavaScript
-
-Office.js (Microsoft Office JavaScript APIs)
-
-Optional backend integration via REST API
-
-Purpose
-To help users quickly understand the safety of an email by providing a clear, compact, and privacy‑respecting risk assessment directly within Outlook.
+============================================================
+END OF README
+============================================================
