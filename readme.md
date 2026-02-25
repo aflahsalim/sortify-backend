@@ -3,15 +3,13 @@
 Sortify is an email‑safety classification system designed for Outlook (Web & Desktop).  
 It helps users quickly understand whether an email is Safe, Suspicious, Spam, or Phishing — directly inside the Outlook task pane.
 
-The system is composed of two parts:
+The system has two components:
 1. Sortify Outlook Add‑in (client)
 2. Sortify Backend (optional ML inference service)
 
 This repository contains the backend component.
 
-============================================================
-1. WHAT IS SORTIFY?
-============================================================
+# What is Sortify?
 
 Sortify is a privacy‑respecting email‑risk detection tool built for Outlook.  
 It analyzes incoming emails using:
@@ -24,14 +22,9 @@ Sortify displays:
 - A short analysis panel (links, attachments, urgency, sender reputation)
 - A confirmation popup for forwarding suspicious emails to support
 
-Sortify does NOT:
-- Store email content
-- Log messages
-- Send full emails to external servers
+Sortify does NOT store email content, log messages, or send full emails to external servers.
 
-============================================================
-2. ROLE OF THIS REPOSITORY (BACKEND)
-============================================================
+# Role of This Repository (Backend)
 
 This backend provides:
 - A lightweight ML model
@@ -39,25 +32,18 @@ This backend provides:
 - A fast scoring pipeline (<500 ms)
 - A privacy‑respecting inference process
 
-The backend is **optional**.  
+The backend is optional.  
 If disabled, the add‑in falls back to local heuristics.
 
-============================================================
-3. FEATURES
-============================================================
+# Features
 
 - Computes a numeric risk score (0–100)
-- Maps results to four categories:
-  Safe, Support, Spam, Phishing
-- Accepts minimal JSON payload:
-  sender domain, link count, attachment count, urgency score, text summary
-- Returns optional:
-  confidence, explanation flags
+- Maps results to four categories: Safe, Support, Spam, Phishing
+- Accepts minimal JSON payload: sender domain, link count, attachment count, urgency score, text summary
+- Returns optional confidence and explanation flags
 - Lightweight, fast, and easy to run locally
 
-============================================================
-4. INSTALLATION & SETUP
-============================================================
+# Installation & Setup
 
 1. Clone the repository:
 git clone https://github.com/yourusername/sortify-backend
@@ -66,20 +52,18 @@ cd sortify-backend
 2. Install dependencies:
 pip install -r requirements.txt
 
-3. Run the backend server (choose one):
+3. Run the backend server:
 uvicorn main:app --reload
-OR
+or
 python app.py
 
 4. Connect the add‑in:
 Enter this URL inside the Sortify add‑in settings:
 http://localhost:8000/api/infer
 
-If unreachable → fallback to local heuristics.
+If unreachable, the add‑in automatically falls back to local heuristics.
 
-============================================================
-5. API CONTRACT
-============================================================
+# API Contract
 
 POST /api/infer
 
@@ -98,9 +82,7 @@ Response JSON:
 - confidence (optional)
 - explanation (optional)
 
-============================================================
-6. MODEL DETAILS
-============================================================
+# Model Details
 
 - Trained offline using labeled email samples
 - Lightweight scikit‑learn model
@@ -108,9 +90,7 @@ Response JSON:
 - No continuous training pipeline
 - No email content stored or logged
 
-============================================================
-7. PRIVACY & SECURITY
-============================================================
+# Privacy & Security
 
 - No email content stored
 - No logs
@@ -118,12 +98,6 @@ Response JSON:
 - HTTPS recommended for production
 - Input validation included
 
-============================================================
-8. PURPOSE
-============================================================
+# Purpose
 
 To provide a simple, optional ML inference service that enhances Sortify’s classification accuracy while respecting privacy and operating within Outlook’s constraints.
-
-============================================================
-END OF README
-============================================================
