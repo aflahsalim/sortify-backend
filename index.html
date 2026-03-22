@@ -1,71 +1,385 @@
 <!DOCTYPE html>
-#test
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Email Classifier</title>
+  <title>Sortify — Admin</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
   <style>
+    /* ── Font + reset ──────────────────────────── */
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:  #34d399;
+      --cyan:   #22d3ee;
+      --amber:  #fbbf24;
+      --red:    #f87171;
+      --purple: #a78bfa;
+      --text:   rgba(255,255,255,0.88);
+      --muted:  rgba(255,255,255,0.38);
+      --glass:  rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.09);
+    }
+
     body {
-      background-color: #111;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 50px;
+      font-family: 'DM Sans', sans-serif;
+      background: #07070f;
+      color: var(--text);
+      min-height: 100vh;
     }
-    input[type="text"] {
-      width: 60%;
-      padding: 10px;
-      font-size: 16px;
+
+    /* ── Animated blobs (same as taskpane) ──────── */
+    .bg { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+    .orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.18; animation: drift 12s ease-in-out infinite alternate; }
+    .o1 { width: 380px; height: 380px; background: #6d28d9; top: -100px; left: -80px; }
+    .o2 { width: 280px; height: 280px; background: #0e7490; top: 40%; right: -60px; animation-delay: -5s; }
+    .o3 { width: 220px; height: 220px; background: #9d174d; bottom: -40px; left: 30%; animation-delay: -9s; }
+    @keyframes drift { from { transform: translate(0,0); } to { transform: translate(18px,24px); } }
+
+    /* ── Glass card ─────────────────────────────── */
+    .glass {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 16px;
     }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      margin-left: 10px;
+
+    /* ── Layout ─────────────────────────────────── */
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px 16px;
+    }
+
+    /* ── Nav ────────────────────────────────────── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      margin-bottom: 20px;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; }
+    .nav-logo svg { flex-shrink: 0; }
+
+    /* Live green dot */
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px rgba(52,211,153,0.6);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .refresh-btn {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      color: var(--muted);
       cursor: pointer;
+      transition: all 0.2s;
     }
-    #result {
-      margin-top: 20px;
-      font-size: 18px;
-      color: yellow;
+    .refresh-btn:hover { background: rgba(255,255,255,0.09); color: var(--text); }
+
+    /* ── Stat cards row ─────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
     }
+    .stat-card { padding: 16px 18px; }
+    .stat-num   { font-size: 30px; font-weight: 600; line-height: 1; }
+    .stat-label { font-size: 10px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* Each stat card gets an accent colour */
+    .c-cyan   .stat-num { color: var(--cyan); }
+    .c-green  .stat-num { color: var(--green); }
+    .c-amber  .stat-num { color: var(--amber); }
+    .c-red    .stat-num { color: var(--red); }
+
+    /* ── Main two-column grid ───────────────────── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 600px) { .main-grid { grid-template-columns: 1fr; } }
+
+    /* ── Chart card ─────────────────────────────── */
+    .chart-card { padding: 18px; }
+    .card-title {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 14px;
+    }
+    .chart-wrap { position: relative; height: 180px; }
+
+    /* ── Table card ─────────────────────────────── */
+    .table-card { padding: 18px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th {
+      font-size: 10px; font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0 10px 10px;
+      text-align: left;
+    }
+    td {
+      padding: 8px 10px;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.75);
+      max-width: 180px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    tr:hover td { background: rgba(255,255,255,0.025); }
+
+    /* Label pills */
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 500;
+    }
+    .pill.ham      { background: rgba(52,211,153,0.1);  color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
+    .pill.support  { background: rgba(34,211,238,0.1);  color: var(--cyan);  border: 1px solid rgba(34,211,238,0.2); }
+    .pill.spam     { background: rgba(251,191,36,0.1);  color: var(--amber); border: 1px solid rgba(251,191,36,0.2); }
+    .pill.phishing { background: rgba(248,113,113,0.1); color: var(--red);   border: 1px solid rgba(248,113,113,0.2); }
+    .pill.unknown  { background: var(--glass); color: var(--muted); border: 1px solid var(--border); }
+
+    /* Red dot for reported emails */
+    .reported-dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 5px rgba(248,113,113,0.5);
+    }
+
+    /* Empty / loading states */
+    .empty { text-align: center; padding: 36px; color: var(--muted); font-size: 13px; }
   </style>
 </head>
 <body>
-  <h1>Email Classifier</h1>
-  <input type="text" id="emailInput" placeholder="Enter email text here..." />
-  <button onclick="classifyEmail()">Classify</button>
-  <div id="result">Result: </div>
+
+  <!-- Background blobs -->
+  <div class="bg">
+    <div class="orb o1"></div>
+    <div class="orb o2"></div>
+    <div class="orb o3"></div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- ── Nav ── -->
+    <nav class="glass">
+      <div class="nav-logo">
+        <!-- Shield icon matching the add-in -->
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z"
+                fill="url(#sg)"/>
+          <defs>
+            <linearGradient id="sg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#a78bfa"/>
+              <stop offset="100%" stop-color="#22d3ee"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        Sortify Admin
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="live-dot" title="Auto-refreshes every 30s"></div>
+        <button class="refresh-btn" onclick="loadData()">Refresh</button>
+      </div>
+    </nav>
+
+    <!-- ── Stat cards ── -->
+    <div class="stats-row">
+      <div class="glass stat-card c-cyan">
+        <div class="stat-num" id="s-total">—</div>
+        <div class="stat-label">Total scans</div>
+      </div>
+      <div class="glass stat-card c-green">
+        <div class="stat-num" id="s-safe">—</div>
+        <div class="stat-label">Safe</div>
+      </div>
+      <div class="glass stat-card c-amber">
+        <div class="stat-num" id="s-spam">—</div>
+        <div class="stat-label">Spam</div>
+      </div>
+      <div class="glass stat-card c-red">
+        <div class="stat-num" id="s-phish">—</div>
+        <div class="stat-label">Phishing</div>
+      </div>
+      <div class="glass stat-card c-red">
+        <div class="stat-num" id="s-reported">—</div>
+        <div class="stat-label">Reported</div>
+      </div>
+    </div>
+
+    <!-- ── Chart + Table ── -->
+    <div class="main-grid">
+
+      <!-- Doughnut chart -->
+      <div class="glass chart-card">
+        <div class="card-title">Breakdown</div>
+        <div class="chart-wrap">
+          <canvas id="pie"></canvas>
+        </div>
+      </div>
+
+      <!-- Recent scans table -->
+      <div class="glass table-card">
+        <div class="card-title">Recent scans</div>
+        <div id="table-body">
+          <div class="empty">Loading...</div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /wrap -->
 
   <script>
-    async function classifyEmail() {
-      const emailText = document.getElementById("emailInput").value;
-      const resultBox = document.getElementById("result");
-      resultBox.innerText = "Classifying...";
+    let chart = null;
 
+    // ── Fetch stats from backend and update UI ──
+    async function loadData() {
       try {
-        const response = await fetch("https://sortify-backend-hwf9d0exgqdub9cn.canadacentral-01.azurewebsites.net/classify", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ text: emailText })
-        });
-
-        const data = await response.json();
-
-        if (data.category) {
-          resultBox.innerText = "Result: " + data.category;
-        } else if (data.error) {
-          resultBox.innerText = "Error: " + data.error;
-        } else {
-          resultBox.innerText = "Result: Unknown";
-        }
-      } catch (error) {
-        resultBox.innerText = "Error: Could not classify";
-        console.error("Classification error:", error);
+        const res  = await fetch("/dashboard/stats");
+        const data = await res.json();
+        updateStatCards(data);
+        updateChart(data.by_label || {});
+        updateTable(data.recent  || []);
+      } catch(e) {
+        document.getElementById("table-body").innerHTML =
+          '<div class="empty">Could not reach backend.</div>';
       }
     }
+
+    // ── Fill the 5 stat number cards ───────────
+    function updateStatCards(data) {
+      const l = data.by_label || {};
+      document.getElementById("s-total").textContent    = data.total    ?? 0;
+      document.getElementById("s-safe").textContent     = (l.ham || 0) + (l.support || 0);
+      document.getElementById("s-spam").textContent     = l.spam        ?? 0;
+      document.getElementById("s-phish").textContent    = l.phishing    ?? 0;
+      document.getElementById("s-reported").textContent = data.reported  ?? 0;
+    }
+
+    // ── Draw / redraw the doughnut chart ────────
+    function updateChart(labels) {
+      const keys   = ["ham", "support", "spam", "phishing"];
+      const names  = ["Safe", "Support", "Spam", "Phishing"];
+      const colors = ["#34d399", "#22d3ee", "#fbbf24", "#f87171"];
+      const vals   = keys.map(k => labels[k] || 0);
+
+      if (chart) chart.destroy();   // destroy before redrawing
+
+      chart = new Chart(document.getElementById("pie"), {
+        type: "doughnut",
+        data: {
+          labels: names,
+          datasets: [{
+            data:            vals,
+            backgroundColor: colors.map(c => c + "22"),  // 13% opacity fill
+            borderColor:     colors,
+            borderWidth:     1.5,
+            hoverOffset:     4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "68%",
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: {
+                color:    "rgba(255,255,255,0.45)",
+                font:     { size: 11, family: "DM Sans" },
+                boxWidth: 10,
+                padding:  10
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // ── Build the recent scans table ────────────
+    function updateTable(rows) {
+      if (!rows.length) {
+        document.getElementById("table-body").innerHTML =
+          '<div class="empty">No scans yet — open an email in Outlook.</div>';
+        return;
+      }
+
+      const html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Sender</th>
+              <th>Subject</th>
+              <th>Label</th>
+              <th>!</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => `
+              <tr>
+                <td>${fmtTime(r.timestamp)}</td>
+                <td>${esc(r.sender  || "—")}</td>
+                <td>${esc(r.subject || "—")}</td>
+                <td><span class="pill ${r.label || "unknown"}">${r.label || "unknown"}</span></td>
+                <td>${r.reported ? '<span class="reported-dot" title="Reported by user"></span>' : ""}</td>
+              </tr>`).join("")}
+          </tbody>
+        </table>`;
+
+      document.getElementById("table-body").innerHTML = html;
+    }
+
+    // ── Helpers ─────────────────────────────────
+
+    // Format ISO timestamp to readable short form
+    function fmtTime(ts) {
+      if (!ts) return "—";
+      try {
+        return new Date(ts + "Z").toLocaleString([], {
+          month: "short", day: "numeric",
+          hour: "2-digit", minute: "2-digit"
+        });
+      } catch(e) { return ts.substring(0, 16).replace("T", " "); }
+    }
+
+    // Escape HTML to prevent XSS from email content
+    function esc(s) {
+      return String(s)
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;");
+    }
+
+    // ── Init ─────────────────────────────────────
+    loadData();
+    setInterval(loadData, 30000);   // auto-refresh every 30 seconds
   </script>
+
 </body>
 </html>
