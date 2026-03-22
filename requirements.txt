@@ -9,3 +9,4 @@ seaborn
 ipywidgets
 fastapi
 uvicorn
+aiofiles
