@@ -1,385 +1,199 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sortify — Admin</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-  <style>
-    /* ── Font + reset ──────────────────────────── */
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --green:  #34d399;
-      --cyan:   #22d3ee;
-      --amber:  #fbbf24;
-      --red:    #f87171;
-      --purple: #a78bfa;
-      --text:   rgba(255,255,255,0.88);
-      --muted:  rgba(255,255,255,0.38);
-      --glass:  rgba(255,255,255,0.05);
-      --border: rgba(255,255,255,0.09);
-    }
-
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: #07070f;
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    /* ── Animated blobs (same as taskpane) ──────── */
-    .bg { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
-    .orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.18; animation: drift 12s ease-in-out infinite alternate; }
-    .o1 { width: 380px; height: 380px; background: #6d28d9; top: -100px; left: -80px; }
-    .o2 { width: 280px; height: 280px; background: #0e7490; top: 40%; right: -60px; animation-delay: -5s; }
-    .o3 { width: 220px; height: 220px; background: #9d174d; bottom: -40px; left: 30%; animation-delay: -9s; }
-    @keyframes drift { from { transform: translate(0,0); } to { transform: translate(18px,24px); } }
-
-    /* ── Glass card ─────────────────────────────── */
-    .glass {
-      background: var(--glass);
-      border: 1px solid var(--border);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border-radius: 16px;
-    }
-
-    /* ── Layout ─────────────────────────────────── */
-    .wrap {
-      position: relative;
-      z-index: 1;
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 20px 16px;
-    }
-
-    /* ── Nav ────────────────────────────────────── */
-    nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 18px;
-      margin-bottom: 20px;
-    }
-    .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; }
-    .nav-logo svg { flex-shrink: 0; }
-
-    /* Live green dot */
-    .live-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 6px rgba(52,211,153,0.6);
-      animation: pulse 2s ease-in-out infinite;
-    }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-
-    .refresh-btn {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 12px;
-      padding: 6px 14px;
-      border-radius: 8px;
-      background: var(--glass);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .refresh-btn:hover { background: rgba(255,255,255,0.09); color: var(--text); }
-
-    /* ── Stat cards row ─────────────────────────── */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .stat-card { padding: 16px 18px; }
-    .stat-num   { font-size: 30px; font-weight: 600; line-height: 1; }
-    .stat-label { font-size: 10px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
-
-    /* Each stat card gets an accent colour */
-    .c-cyan   .stat-num { color: var(--cyan); }
-    .c-green  .stat-num { color: var(--green); }
-    .c-amber  .stat-num { color: var(--amber); }
-    .c-red    .stat-num { color: var(--red); }
-
-    /* ── Main two-column grid ───────────────────── */
-    .main-grid {
-      display: grid;
-      grid-template-columns: 220px 1fr;
-      gap: 14px;
-    }
-    @media (max-width: 600px) { .main-grid { grid-template-columns: 1fr; } }
-
-    /* ── Chart card ─────────────────────────────── */
-    .chart-card { padding: 18px; }
-    .card-title {
-      font-size: 10px;
-      font-weight: 500;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      margin-bottom: 14px;
-    }
-    .chart-wrap { position: relative; height: 180px; }
-
-    /* ── Table card ─────────────────────────────── */
-    .table-card { padding: 18px; overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th {
-      font-size: 10px; font-weight: 500;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 0 10px 10px;
-      text-align: left;
-    }
-    td {
-      padding: 8px 10px;
-      border-top: 1px solid rgba(255,255,255,0.04);
-      color: rgba(255,255,255,0.75);
-      max-width: 180px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    tr:hover td { background: rgba(255,255,255,0.025); }
-
-    /* Label pills */
-    .pill {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-size: 10px;
-      font-weight: 500;
-    }
-    .pill.ham      { background: rgba(52,211,153,0.1);  color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
-    .pill.support  { background: rgba(34,211,238,0.1);  color: var(--cyan);  border: 1px solid rgba(34,211,238,0.2); }
-    .pill.spam     { background: rgba(251,191,36,0.1);  color: var(--amber); border: 1px solid rgba(251,191,36,0.2); }
-    .pill.phishing { background: rgba(248,113,113,0.1); color: var(--red);   border: 1px solid rgba(248,113,113,0.2); }
-    .pill.unknown  { background: var(--glass); color: var(--muted); border: 1px solid var(--border); }
-
-    /* Red dot for reported emails */
-    .reported-dot {
-      display: inline-block;
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--red);
-      box-shadow: 0 0 5px rgba(248,113,113,0.5);
-    }
-
-    /* Empty / loading states */
-    .empty { text-align: center; padding: 36px; color: var(--muted); font-size: 13px; }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sortify — Admin</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --green: #34d399; --cyan: #22d3ee; --amber: #fbbf24; --red: #f87171;
+  --text: rgba(255,255,255,0.88); --muted: rgba(255,255,255,0.38);
+  --glass: rgba(255,255,255,0.05); --border: rgba(255,255,255,0.09);
+}
+body { font-family: 'DM Sans', sans-serif; background: #07070f; color: var(--text); min-height: 100vh; }
+.bg { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+.orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.18; animation: drift 12s ease-in-out infinite alternate; }
+.o1 { width: 380px; height: 380px; background: #6d28d9; top: -100px; left: -80px; }
+.o2 { width: 280px; height: 280px; background: #0e7490; top: 40%; right: -60px; animation-delay: -5s; }
+.o3 { width: 220px; height: 220px; background: #9d174d; bottom: -40px; left: 30%; animation-delay: -9s; }
+@keyframes drift { from { transform: translate(0,0); } to { transform: translate(18px,24px); } }
+.glass { background: var(--glass); border: 1px solid var(--border); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-radius: 16px; }
+.wrap { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 20px 16px; }
+nav { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; margin-bottom: 20px; }
+.nav-logo { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px rgba(52,211,153,0.6); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+.refresh-btn { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 6px 14px; border-radius: 8px; background: var(--glass); border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all 0.2s; }
+.refresh-btn:hover { background: rgba(255,255,255,0.09); color: var(--text); }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.stat-card { padding: 16px 18px; }
+.stat-num { font-size: 30px; font-weight: 600; line-height: 1; }
+.stat-label { font-size: 10px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+.c-cyan .stat-num { color: var(--cyan); }
+.c-green .stat-num { color: var(--green); }
+.c-amber .stat-num { color: var(--amber); }
+.c-red .stat-num { color: var(--red); }
+.main-grid { display: grid; grid-template-columns: 220px 1fr; gap: 14px; }
+@media (max-width: 600px) { .main-grid { grid-template-columns: 1fr; } }
+.chart-card, .table-card { padding: 18px; }
+.card-title { font-size: 10px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 14px; }
+.chart-wrap { position: relative; height: 180px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { font-size: 10px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 0 10px 10px; text-align: left; }
+td { padding: 8px 10px; border-top: 1px solid rgba(255,255,255,0.04); color: rgba(255,255,255,0.75); max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+tr:hover td { background: rgba(255,255,255,0.025); }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 500; }
+.pill.ham     { background: rgba(52,211,153,0.1);  color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
+.pill.support { background: rgba(34,211,238,0.1);  color: var(--cyan);  border: 1px solid rgba(34,211,238,0.2); }
+.pill.spam    { background: rgba(251,191,36,0.1);  color: var(--amber); border: 1px solid rgba(251,191,36,0.2); }
+.pill.phishing{ background: rgba(248,113,113,0.1); color: var(--red);   border: 1px solid rgba(248,113,113,0.2); }
+.pill.unknown { background: var(--glass); color: var(--muted); border: 1px solid var(--border); }
+.reported-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--red); box-shadow: 0 0 5px rgba(248,113,113,0.5); }
+.empty { text-align: center; padding: 36px; color: var(--muted); font-size: 13px; }
+.error-banner { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); border-radius: 10px; padding: 10px 14px; font-size: 12px; color: var(--red); margin-bottom: 14px; display:none; }
+</style>
 </head>
 <body>
+<div class="bg">
+  <div class="orb o1"></div>
+  <div class="orb o2"></div>
+  <div class="orb o3"></div>
+</div>
+<div class="wrap">
+  <nav class="glass">
+    <div class="nav-logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z" fill="url(#sg)"/>
+        <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#22d3ee"/></linearGradient></defs>
+      </svg>
+      Sortify Admin
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="live-dot" id="live-dot" title="Backend status"></div>
+      <button class="refresh-btn" onclick="loadData()">Refresh</button>
+    </div>
+  </nav>
 
-  <!-- Background blobs -->
-  <div class="bg">
-    <div class="orb o1"></div>
-    <div class="orb o2"></div>
-    <div class="orb o3"></div>
+  <!-- Error banner shown when backend is unreachable -->
+  <div class="error-banner" id="error-banner">
+    ⚠ Could not reach backend at <span id="backend-url-display"></span>. Make sure your FastAPI server is running and deployed.
   </div>
 
-  <div class="wrap">
+  <div class="stats-row">
+    <div class="glass stat-card c-cyan"><div class="stat-num" id="s-total">—</div><div class="stat-label">Total Scans</div></div>
+    <div class="glass stat-card c-green"><div class="stat-num" id="s-safe">—</div><div class="stat-label">Safe</div></div>
+    <div class="glass stat-card c-amber"><div class="stat-num" id="s-spam">—</div><div class="stat-label">Spam</div></div>
+    <div class="glass stat-card c-red"><div class="stat-num" id="s-phish">—</div><div class="stat-label">Phishing</div></div>
+    <div class="glass stat-card c-red"><div class="stat-num" id="s-reported">—</div><div class="stat-label">Reported</div></div>
+  </div>
 
-    <!-- ── Nav ── -->
-    <nav class="glass">
-      <div class="nav-logo">
-        <!-- Shield icon matching the add-in -->
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z"
-                fill="url(#sg)"/>
-          <defs>
-            <linearGradient id="sg" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#a78bfa"/>
-              <stop offset="100%" stop-color="#22d3ee"/>
-            </linearGradient>
-          </defs>
-        </svg>
-        Sortify Admin
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div class="live-dot" title="Auto-refreshes every 30s"></div>
-        <button class="refresh-btn" onclick="loadData()">Refresh</button>
-      </div>
-    </nav>
-
-    <!-- ── Stat cards ── -->
-    <div class="stats-row">
-      <div class="glass stat-card c-cyan">
-        <div class="stat-num" id="s-total">—</div>
-        <div class="stat-label">Total scans</div>
-      </div>
-      <div class="glass stat-card c-green">
-        <div class="stat-num" id="s-safe">—</div>
-        <div class="stat-label">Safe</div>
-      </div>
-      <div class="glass stat-card c-amber">
-        <div class="stat-num" id="s-spam">—</div>
-        <div class="stat-label">Spam</div>
-      </div>
-      <div class="glass stat-card c-red">
-        <div class="stat-num" id="s-phish">—</div>
-        <div class="stat-label">Phishing</div>
-      </div>
-      <div class="glass stat-card c-red">
-        <div class="stat-num" id="s-reported">—</div>
-        <div class="stat-label">Reported</div>
-      </div>
+  <div class="main-grid">
+    <div class="glass chart-card">
+      <div class="card-title">Breakdown</div>
+      <div class="chart-wrap"><canvas id="pie"></canvas></div>
     </div>
-
-    <!-- ── Chart + Table ── -->
-    <div class="main-grid">
-
-      <!-- Doughnut chart -->
-      <div class="glass chart-card">
-        <div class="card-title">Breakdown</div>
-        <div class="chart-wrap">
-          <canvas id="pie"></canvas>
-        </div>
-      </div>
-
-      <!-- Recent scans table -->
-      <div class="glass table-card">
-        <div class="card-title">Recent scans</div>
-        <div id="table-body">
-          <div class="empty">Loading...</div>
-        </div>
-      </div>
-
+    <div class="glass table-card">
+      <div class="card-title">Recent Scans</div>
+      <div id="table-body"><div class="empty">Loading…</div></div>
     </div>
-  </div><!-- /wrap -->
+  </div>
+</div>
 
-  <script>
-    let chart = null;
+<script>
+// ── IMPORTANT: set this to your actual Azure backend URL ─────────────────────
+// It CANNOT be a relative path when this page is hosted on GitHub Pages.
+// Example: "https://sortify-backend.azurewebsites.net"
+const BACKEND = "https://sortify-backend.azurewebsites.net";
+// ─────────────────────────────────────────────────────────────────────────────
 
-    // ── Fetch stats from backend and update UI ──
-    async function loadData() {
-      try {
-        const res  = await fetch("/dashboard/stats");
-        const data = await res.json();
-        updateStatCards(data);
-        updateChart(data.by_label || {});
-        updateTable(data.recent  || []);
-      } catch(e) {
-        document.getElementById("table-body").innerHTML =
-          '<div class="empty">Could not reach backend.</div>';
-      }
+document.getElementById("backend-url-display").textContent = BACKEND + "/dashboard/stats";
+
+let chart = null;
+
+async function loadData() {
+  try {
+    const res = await fetch(BACKEND + "/dashboard/stats");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+
+    // Backend is reachable — hide error, turn dot green
+    document.getElementById("error-banner").style.display = "none";
+    document.getElementById("live-dot").style.background = "#34d399";
+
+    updateStatCards(data);
+    updateChart(data.by_label || {});
+    updateTable(data.recent || []);
+  } catch(e) {
+    document.getElementById("error-banner").style.display = "block";
+    document.getElementById("live-dot").style.background = "#f87171";
+    document.getElementById("table-body").innerHTML =
+      '<div class="empty">Could not reach backend.</div>';
+  }
+}
+
+function updateStatCards(data) {
+  const l = data.by_label || {};
+  document.getElementById("s-total").textContent    = data.total ?? 0;
+  document.getElementById("s-safe").textContent     = (l.ham || 0) + (l.support || 0);
+  document.getElementById("s-spam").textContent     = l.spam ?? 0;
+  document.getElementById("s-phish").textContent    = l.phishing ?? 0;
+  document.getElementById("s-reported").textContent = data.reported ?? 0;
+}
+
+function updateChart(labels) {
+  const keys   = ["ham","support","spam","phishing"];
+  const names  = ["Safe","Support","Spam","Phishing"];
+  const colors = ["#34d399","#22d3ee","#fbbf24","#f87171"];
+  const vals   = keys.map(k => labels[k] || 0);
+
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById("pie"), {
+    type: "doughnut",
+    data: {
+      labels: names,
+      datasets: [{ data: vals, backgroundColor: colors.map(c => c + "22"), borderColor: colors, borderWidth: 1.5, hoverOffset: 4 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: "68%",
+      plugins: { legend: { position: "bottom", labels: { color: "rgba(255,255,255,0.45)", font: { size: 11, family: "DM Sans" }, boxWidth: 10, padding: 10 } } }
     }
+  });
+}
 
-    // ── Fill the 5 stat number cards ───────────
-    function updateStatCards(data) {
-      const l = data.by_label || {};
-      document.getElementById("s-total").textContent    = data.total    ?? 0;
-      document.getElementById("s-safe").textContent     = (l.ham || 0) + (l.support || 0);
-      document.getElementById("s-spam").textContent     = l.spam        ?? 0;
-      document.getElementById("s-phish").textContent    = l.phishing    ?? 0;
-      document.getElementById("s-reported").textContent = data.reported  ?? 0;
-    }
+function updateTable(rows) {
+  if (!rows.length) {
+    document.getElementById("table-body").innerHTML =
+      '<div class="empty">No scans yet — open an email in Outlook.</div>';
+    return;
+  }
+  document.getElementById("table-body").innerHTML = `
+    <table>
+      <thead><tr><th>Time</th><th>Sender</th><th>Subject</th><th>Label</th><th>!</th></tr></thead>
+      <tbody>${rows.map(r => `
+        <tr>
+          <td>${fmtTime(r.timestamp)}</td>
+          <td>${esc(r.sender || "—")}</td>
+          <td>${esc(r.subject || "—")}</td>
+          <td><span class="pill ${r.label || "unknown"}">${r.label || "unknown"}</span></td>
+          <td>${r.reported ? '<span class="reported-dot" title="Reported"></span>' : ""}</td>
+        </tr>`).join("")}
+      </tbody>
+    </table>`;
+}
 
-    // ── Draw / redraw the doughnut chart ────────
-    function updateChart(labels) {
-      const keys   = ["ham", "support", "spam", "phishing"];
-      const names  = ["Safe", "Support", "Spam", "Phishing"];
-      const colors = ["#34d399", "#22d3ee", "#fbbf24", "#f87171"];
-      const vals   = keys.map(k => labels[k] || 0);
+function fmtTime(ts) {
+  if (!ts) return "—";
+  try { return new Date(ts + "Z").toLocaleString([], { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" }); }
+  catch(e) { return ts.substring(0,16).replace("T"," "); }
+}
 
-      if (chart) chart.destroy();   // destroy before redrawing
+function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
-      chart = new Chart(document.getElementById("pie"), {
-        type: "doughnut",
-        data: {
-          labels: names,
-          datasets: [{
-            data:            vals,
-            backgroundColor: colors.map(c => c + "22"),  // 13% opacity fill
-            borderColor:     colors,
-            borderWidth:     1.5,
-            hoverOffset:     4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: "68%",
-          plugins: {
-            legend: {
-              position: "bottom",
-              labels: {
-                color:    "rgba(255,255,255,0.45)",
-                font:     { size: 11, family: "DM Sans" },
-                boxWidth: 10,
-                padding:  10
-              }
-            }
-          }
-        }
-      });
-    }
-
-    // ── Build the recent scans table ────────────
-    function updateTable(rows) {
-      if (!rows.length) {
-        document.getElementById("table-body").innerHTML =
-          '<div class="empty">No scans yet — open an email in Outlook.</div>';
-        return;
-      }
-
-      const html = `
-        <table>
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>Sender</th>
-              <th>Subject</th>
-              <th>Label</th>
-              <th>!</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows.map(r => `
-              <tr>
-                <td>${fmtTime(r.timestamp)}</td>
-                <td>${esc(r.sender  || "—")}</td>
-                <td>${esc(r.subject || "—")}</td>
-                <td><span class="pill ${r.label || "unknown"}">${r.label || "unknown"}</span></td>
-                <td>${r.reported ? '<span class="reported-dot" title="Reported by user"></span>' : ""}</td>
-              </tr>`).join("")}
-          </tbody>
-        </table>`;
-
-      document.getElementById("table-body").innerHTML = html;
-    }
-
-    // ── Helpers ─────────────────────────────────
-
-    // Format ISO timestamp to readable short form
-    function fmtTime(ts) {
-      if (!ts) return "—";
-      try {
-        return new Date(ts + "Z").toLocaleString([], {
-          month: "short", day: "numeric",
-          hour: "2-digit", minute: "2-digit"
-        });
-      } catch(e) { return ts.substring(0, 16).replace("T", " "); }
-    }
-
-    // Escape HTML to prevent XSS from email content
-    function esc(s) {
-      return String(s)
-        .replace(/&/g,"&amp;")
-        .replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;");
-    }
-
-    // ── Init ─────────────────────────────────────
-    loadData();
-    setInterval(loadData, 30000);   // auto-refresh every 30 seconds
-  </script>
-
+loadData();
+setInterval(loadData, 30000);
+</script>
 </body>
 </html>
