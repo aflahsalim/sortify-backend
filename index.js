@@ -96,7 +96,7 @@ function renderHeatmap(matrix) {
   header.style.display = "flex";
   header.style.justifyContent = "space-between";
   header.style.fontSize = "9px";
-  header.style.color = "#94a3b8";
+  header.style.color = "#8a8a8a";
   header.innerHTML = "<span></span><span>0</span><span>6</span><span>12</span><span>18</span><span>23</span>";
   container.appendChild(header);
 
@@ -104,7 +104,7 @@ function renderHeatmap(matrix) {
     const label = document.createElement("div");
     label.textContent = days[d];
     label.style.fontSize = "9px";
-    label.style.color = "#94a3b8";
+    label.style.color = "#8a8a8a";
     label.style.display = "flex";
     label.style.alignItems = "center";
     container.appendChild(label);
@@ -129,7 +129,7 @@ function renderLeaderboard(rows) {
   const body = document.getElementById("leaderboard-body");
   body.innerHTML = "";
   if (!rows || rows.length === 0) {
-    body.innerHTML = `<tr><td colspan="2" style="color:#94a3b8;">No data</td></tr>`;
+    body.innerHTML = `<tr><td colspan="2" style="color:#8a8a8a;">No data</td></tr>`;
     return;
   }
   rows.forEach(r => {
@@ -153,24 +153,28 @@ function renderTrends(trends) {
 
   const phishing = data.map(d => d.phishing || 0);
   const spam = data.map(d => d.spam || 0);
-  const reported = data.map(d => d.reported || 0);
 
   const options = {
     chart: {
-      type: "line",
+      type: "bar",
       height: 260,
-      foreColor: "#94a3b8",
+      foreColor: "#8a8a8a",
       background: "transparent",
       toolbar: { show: false }
     },
-    stroke: { width: 3, curve: "smooth" },
+    plotOptions: {
+      bar: {
+        horizontal: false,
+        columnWidth: "45%",
+        borderRadius: 4
+      }
+    },
     series: [
       { name: "Phishing", data: phishing, color: "#ef4444" },
-      { name: "Spam", data: spam, color: "#fbbf24" },
-      { name: "Reported", data: reported, color: "#38bdf8" }
+      { name: "Spam", data: spam, color: "#fbbf24" }
     ],
     xaxis: { categories: days },
-    grid: { borderColor: "#334155" }
+    grid: { borderColor: "#1a1a1a" }
   };
 
   document.getElementById("trend-chart").innerHTML = "";
@@ -181,7 +185,7 @@ function renderScans(recent) {
   const body = document.getElementById("scans-body");
   body.innerHTML = "";
   if (!recent || recent.length === 0) {
-    body.innerHTML = `<tr><td colspan="5" style="color:#94a3b8;">No scans yet</td></tr>`;
+    body.innerHTML = `<tr><td colspan="5" style="color:#8a8a8a;">No scans yet</td></tr>`;
     return;
   }
 
