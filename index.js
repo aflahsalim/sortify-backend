@@ -35,7 +35,6 @@ document.getElementById("app").innerHTML = `
       <div class="metric-card"><div class="metric-label">Safe</div><div class="metric-value metric-safe" id="m-safe">-</div></div>
       <div class="metric-card"><div class="metric-label">Spam</div><div class="metric-value metric-spam" id="m-spam">-</div></div>
       <div class="metric-card"><div class="metric-label">Phishing</div><div class="metric-value metric-phish" id="m-phish">-</div></div>
-      <div class="metric-card"><div class="metric-label">Reported</div><div class="metric-value metric-reported" id="m-reported">-</div></div>
     </section>
 
     <section class="layout-main">
@@ -51,10 +50,10 @@ document.getElementById("app").innerHTML = `
         <div class="card-title" style="margin-top:10px;">Reporting leaderboard</div>
         <table class="leaderboard-table">
           <thead>
-            <tr><th>Sender</th><th>Scans</th><th>Reported</th></tr>
+            <tr><th>Sender</th><th>Scans</th></tr>
           </thead>
           <tbody id="leaderboard-body">
-            <tr><td colspan="3" style="color:var(--muted);">No data</td></tr>
+            <tr><td colspan="2" style="color:var(--muted);">No data</td></tr>
           </tbody>
         </table>
       </div>
@@ -62,14 +61,17 @@ document.getElementById("app").innerHTML = `
 
     <section class="card">
       <div class="card-title">Recent scans</div>
-      <table class="scans-table">
-        <thead>
-          <tr><th>Time</th><th>Sender</th><th>Subject</th><th>Label</th><th>Score</th><th>Reported</th></tr>
-        </thead>
-        <tbody id="scans-body">
-          <tr><td colspan="6" style="color:var(--muted);">No scans yet</td></tr>
-        </tbody>
-      </table>
+
+      <div class="scans-scroll">
+        <table class="scans-table">
+          <thead>
+            <tr><th>Time</th><th>Sender</th><th>Subject</th><th>Label</th><th>Score</th></tr>
+          </thead>
+          <tbody id="scans-body">
+            <tr><td colspan="5" style="color:var(--muted);">No scans yet</td></tr>
+          </tbody>
+        </table>
+      </div>
 
       <div class="export-row">
         <button class="export-btn" data-label="">Export all</button>
@@ -106,12 +108,11 @@ function setMetrics(stats) {
   document.getElementById("m-safe").textContent = (by.ham || 0) + (by.support || 0);
   document.getElementById("m-spam").textContent = by.spam || 0;
   document.getElementById("m-phish").textContent = by.phishing || 0;
-  document.getElementById("m-reported").textContent = stats.reported ?? 0;
 }
 
 
 // =========================
-//  HEATMAP
+//  HEATMAP (IMPROVED)
 // =========================
 
 function renderHeatmap(matrix) {
@@ -141,10 +142,13 @@ function renderHeatmap(matrix) {
       const cell = document.createElement("div");
       cell.className = "heatmap-cell";
       const v = (matrix[d] && matrix[d][h]) || 0;
-      if (v > 0 && v <= 2) cell.classList.add("level-1");
-      else if (v <= 4) cell.classList.add("level-2");
-      else if (v <= 8) cell.classList.add("level-3");
-      else if (v > 8) cell.classList.add("level-4");
+
+      if (v === 0) {}
+      else if (v <= 1) cell.classList.add("level-1");
+      else if (v <= 3) cell.classList.add("level-2");
+      else if (v <= 6) cell.classList.add("level-3");
+      else cell.classList.add("level-4");
+
       container.appendChild(cell);
     }
   }
@@ -152,14 +156,14 @@ function renderHeatmap(matrix) {
 
 
 // =========================
-//  LEADERBOARD
+//  LEADERBOARD (NO REPORTED)
 // =========================
 
 function renderLeaderboard(rows) {
   const body = document.getElementById("leaderboard-body");
   body.innerHTML = "";
   if (!rows || rows.length === 0) {
-    body.innerHTML = `<tr><td colspan="3" style="color:var(--muted);">No data</td></tr>`;
+    body.innerHTML = `<tr><td colspan="2" style="color:var(--muted);">No data</td></tr>`;
     return;
   }
   rows.forEach(r => {
@@ -167,7 +171,6 @@ function renderLeaderboard(rows) {
       <tr>
         <td>${r.sender}</td>
         <td>${r.scans}</td>
-        <td>${r.reported}</td>
       </tr>
     `;
   });
@@ -175,7 +178,7 @@ function renderLeaderboard(rows) {
 
 
 // =========================
-//  TRENDS (APEXCHARTS)
+//  TRENDS (IMPROVED)
 // =========================
 
 function renderTrends(trends) {
@@ -194,16 +197,16 @@ function renderTrends(trends) {
   const options = {
     chart: {
       type: "line",
-      height: 160,
+      height: 260,
       foreColor: "#94a3b8",
       background: "transparent",
       toolbar: { show: false }
     },
-    stroke: { width: 2, curve: "smooth" },
+    stroke: { width: 3, curve: "smooth" },
     series: [
-      { name: "Phishing", data: phishing, color: "#fb7185" },
+      { name: "Phishing", data: phishing, color: "#ff4d6d" },
       { name: "Spam", data: spam, color: "#fbbf24" },
-      { name: "Reported", data: reported, color: "#22d3ee" }
+      { name: "Reported", data: reported, color: "#38bdf8" }
     ],
     xaxis: { categories: days },
     grid: { borderColor: "#1f2937" }
@@ -215,14 +218,14 @@ function renderTrends(trends) {
 
 
 // =========================
-//  RECENT SCANS + MODAL
+//  RECENT SCANS (SCROLLABLE)
 // =========================
 
 function renderScans(recent) {
   const body = document.getElementById("scans-body");
   body.innerHTML = "";
   if (!recent || recent.length === 0) {
-    body.innerHTML = `<tr><td colspan="6" style="color:var(--muted);">No scans yet</td></tr>`;
+    body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No scans yet</td></tr>`;
     return;
   }
 
@@ -246,11 +249,15 @@ function renderScans(recent) {
         <td>${e.subject || "-"}</td>
         <td><span class="label-pill ${pillClass}">${label}</span></td>
         <td>${e.score ?? "-"}</td>
-        <td>${e.reported ? "Yes" : "No"}</td>
       </tr>
     `;
   });
 }
+
+
+// =========================
+//  MODAL (NO REPORTED)
+// =========================
 
 function openModal(idx) {
   const entry = scansCache[idx];
@@ -266,7 +273,7 @@ function openModal(idx) {
     entry.body_preview || "(No body preview stored)";
 
   document.getElementById("modal-class").textContent =
-    `Label: ${entry.label} · Score: ${entry.score} · Reported: ${entry.reported ? "Yes" : "No"}`;
+    `Label: ${entry.label} · Score: ${entry.score}`;
 
   document.getElementById("modal-backdrop").classList.add("active");
 }
