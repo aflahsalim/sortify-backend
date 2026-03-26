@@ -149,15 +149,35 @@ nav {
   margin-top: 5px;
 }
 
-/* Colour per card */
-.metric-card:nth-child(1) .accent,
-.metric-card:nth-child(1) .metric-value { background: var(--info);   color: var(--info); }
-.metric-card:nth-child(2) .accent,
-.metric-card:nth-child(2) .metric-value { background: var(--safe);   color: var(--safe); }
-.metric-card:nth-child(3) .accent,
-.metric-card:nth-child(3) .metric-value { background: var(--warn);   color: var(--warn); }
-.metric-card:nth-child(4) .accent,
-.metric-card:nth-child(4) .metric-value { background: var(--danger); color: var(--danger); }
+/* Colour per card — accent only, no background on metric-value */
+.metric-card:nth-child(1) .accent { 
+  background: var(--info); 
+}
+.metric-card:nth-child(1) .metric-value { 
+  color: var(--info);
+  background: transparent !important;
+}
+.metric-card:nth-child(2) .accent { 
+  background: var(--safe); 
+}
+.metric-card:nth-child(2) .metric-value { 
+  color: var(--safe);
+  background: transparent !important;
+}
+.metric-card:nth-child(3) .accent { 
+  background: var(--warn); 
+}
+.metric-card:nth-child(3) .metric-value { 
+  color: var(--warn);
+  background: transparent !important;
+}
+.metric-card:nth-child(4) .accent { 
+  background: var(--danger); 
+}
+.metric-card:nth-child(4) .metric-value { 
+  color: var(--danger);
+  background: transparent !important;
+}
 
 /* ── Layout ──────────────────────────────────────────────────────────────── */
 .layout-main {
