@@ -18,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# last 1000 scans kept in memory
+# store last 1000 scans
 scan_log = deque(maxlen=1000)
 
 class EmailRequest(BaseModel):
@@ -39,30 +39,21 @@ async def classify_email(request: EmailRequest):
     proba = model.predict_proba(input_df)[0]
     score = round(float(max(proba)), 2)
 
-    label_map = {
-        "ham":      {"display": "Ham (Safe)",      "color": "green"},
-        "spam":     {"display": "Spam",            "color": "orange"},
-        "phishing": {"display": "Phishing Risk",   "color": "red"},
-        "support":  {"display": "Support Ticket",  "color": "blue"},
-    }
-    mapped = label_map.get(label, {"display": label, "color": "gray"})
-
     scan_log.appendleft({
-        "id":        len(scan_log) + 1,
+        "id": len(scan_log) + 1,
         "timestamp": datetime.utcnow().isoformat(),
-        "sender":    request.sender,
-        "subject":   request.subject,
-        "label":     label,
-        "score":     score,
-        "reported":  request.reported,
+        "sender": request.sender,
+        "subject": request.subject,
+        "label": label,
+        "score": score,
+        "reported": request.reported,
         "attachment": request.attachment,
+        "body_preview": request.text[:500],   # FIXED
     })
 
     return {
-        "score":      score,
-        "label":      label,
-        "display":    mapped["display"],
-        "color":      mapped["color"],
+        "score": score,
+        "label": label,
         "attachment": request.attachment,
     }
 
@@ -78,55 +69,36 @@ async def dashboard_stats():
             reported_count += 1
 
     return {
-        "total":    len(logs),
+        "total": len(logs),
         "by_label": by_label,
         "reported": reported_count,
-        "recent":   logs[:20],
+        "recent": logs[:20],
     }
 
 @app.get("/dashboard/heatmap")
 async def dashboard_heatmap():
-    """
-    Returns counts by day_of_week (0=Mon) and hour (0-23) for phishing+spam.
-    """
     heat = [[0 for _ in range(24)] for _ in range(7)]
     for entry in scan_log:
-        lbl = entry.get("label")
-        if lbl not in ("phishing", "spam"):
+        if entry["label"] not in ("phishing", "spam"):
             continue
-        ts = entry.get("timestamp")
-        try:
-            dt = datetime.fromisoformat(ts)
-        except Exception:
-            continue
-        dow = dt.weekday()
-        hour = dt.hour
-        heat[dow][hour] += 1
+        dt = datetime.fromisoformat(entry["timestamp"])
+        heat[dt.weekday()][dt.hour] += 1
     return {"matrix": heat}
 
 @app.get("/dashboard/trends")
 async def dashboard_trends(days: int = 14):
-    """
-    Returns per-day counts for labels + reported over last N days.
-    """
     cutoff = datetime.utcnow() - timedelta(days=days)
     per_day = defaultdict(lambda: {"ham": 0, "spam": 0, "phishing": 0, "support": 0, "reported": 0})
+
     for entry in scan_log:
-        ts = entry.get("timestamp")
-        try:
-            dt = datetime.fromisoformat(ts)
-        except Exception:
-            continue
+        dt = datetime.fromisoformat(entry["timestamp"])
         if dt < cutoff:
             continue
-        day_key = dt.date().isoformat()
-        lbl = entry.get("label", "ham")
-        if lbl in per_day[day_key]:
-            per_day[day_key][lbl] += 1
-        else:
-            per_day[day_key][lbl] = per_day[day_key].get(lbl, 0) + 1
-        if entry.get("reported"):
-            per_day[day_key]["reported"] += 1
+        key = dt.date().isoformat()
+        lbl = entry["label"]
+        per_day[key][lbl] += 1
+        if entry["reported"]:
+            per_day[key]["reported"] += 1
 
     days_sorted = sorted(per_day.keys())
     return {
@@ -136,82 +108,54 @@ async def dashboard_trends(days: int = 14):
 
 @app.get("/dashboard/leaderboard")
 async def dashboard_leaderboard():
-    """
-    Simple leaderboard by sender: how many scans + how many reported.
-    """
     stats = {}
     for entry in scan_log:
         sender = entry.get("sender") or "Unknown"
         if sender not in stats:
             stats[sender] = {"scans": 0, "reported": 0}
         stats[sender]["scans"] += 1
-        if entry.get("reported"):
+        if entry["reported"]:
             stats[sender]["reported"] += 1
 
-    rows = [
-        {"sender": s, "scans": v["scans"], "reported": v["reported"]}
-        for s, v in stats.items()
-    ]
-    rows.sort(key=lambda r: r["reported"], reverse=True)
+    rows = sorted(
+        [{"sender": s, "scans": v["scans"], "reported": v["reported"]} for s, v in stats.items()],
+        key=lambda x: x["reported"],
+        reverse=True
+    )
     return {"rows": rows[:20]}
 
 @app.get("/dashboard/alerts")
 async def dashboard_alerts():
-    """
-    Simple spike detection: phishing in last 10 minutes.
-    """
     now = datetime.utcnow()
     window = now - timedelta(minutes=10)
-    phishing_count = 0
-    for entry in scan_log:
-        if entry.get("label") != "phishing":
-            continue
-        ts = entry.get("timestamp")
-        try:
-            dt = datetime.fromisoformat(ts)
-        except Exception:
-            continue
-        if dt >= window:
-            phishing_count += 1
-
-    threshold = 5
-    if phishing_count >= threshold:
+    phishing_count = sum(
+        1 for e in scan_log
+        if e["label"] == "phishing" and datetime.fromisoformat(e["timestamp"]) >= window
+    )
+    if phishing_count >= 5:
         return {
             "active": True,
-            "type": "phishing_spike",
-            "count": phishing_count,
-            "message": f"Spike detected: {phishing_count} phishing emails in last 10 minutes.",
+            "message": f"Spike detected: {phishing_count} phishing emails in last 10 minutes."
         }
     return {"active": False}
 
 @app.get("/dashboard/export")
 async def dashboard_export(label: str | None = Query(default=None)):
-    """
-    Export scans as CSV. Optional ?label=phishing/spam/ham/support.
-    """
-    rows = []
-    for entry in scan_log:
-        if label and entry.get("label") != label:
-            continue
-        rows.append(entry)
-
-    if not rows:
-        return PlainTextResponse("timestamp,sender,subject,label,score,reported,attachment\n", media_type="text/csv")
+    rows = [e for e in scan_log if not label or e["label"] == label]
 
     lines = ["timestamp,sender,subject,label,score,reported,attachment"]
     for e in rows:
-        line = [
-            e.get("timestamp", ""),
-            (e.get("sender") or "").replace(",", " "),
-            (e.get("subject") or "").replace(",", " "),
-            e.get("label", ""),
-            str(e.get("score", "")),
-            "1" if e.get("reported") else "0",
-            e.get("attachment", ""),
-        ]
-        lines.append(",".join(line))
-    csv_data = "\n".join(lines) + "\n"
-    return PlainTextResponse(csv_data, media_type="text/csv")
+        lines.append(",".join([
+            e["timestamp"],
+            (e["sender"] or "").replace(",", " "),
+            (e["subject"] or "").replace(",", " "),
+            e["label"],
+            str(e["score"]),
+            "1" if e["reported"] else "0",
+            e["attachment"],
+        ]))
+
+    return PlainTextResponse("\n".join(lines), media_type="text/csv")
 
 @app.get("/")
 async def root():
