@@ -1,8 +1,9 @@
+/* GLOBAL */
 body {
   margin: 0;
-  background: #0f172a;
-  color: #e2e8f0;
-  font-family: system-ui, sans-serif;
+  background: #000000;
+  color: #e5e5e5;
+  font-family: Inter, system-ui, sans-serif;
 }
 
 .shell {
@@ -11,6 +12,7 @@ body {
   padding: 20px;
 }
 
+/* HEADER */
 header {
   display: flex;
   justify-content: space-between;
@@ -23,39 +25,41 @@ header {
 }
 
 .subtitle {
-  font-size: 14px;
-  color: #94a3b8;
+  font-size: 13px;
+  color: #8a8a8a;
 }
 
 .refresh-btn {
-  background: #1e293b;
-  color: #e2e8f0;
-  border: 1px solid #334155;
+  background: #111;
+  color: #fff;
+  border: 1px solid #333;
   padding: 8px 14px;
   border-radius: 6px;
   cursor: pointer;
 }
 
+/* METRICS */
 .grid-metrics {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
 .metric-card {
-  background: #1e293b;
-  padding: 16px;
+  background: #0d0d0d;
+  padding: 14px;
   border-radius: 8px;
+  border: 1px solid #1a1a1a;
 }
 
 .metric-label {
   font-size: 12px;
-  color: #94a3b8;
+  color: #8a8a8a;
 }
 
 .metric-value {
-  font-size: 24px;
+  font-size: 22px;
   margin-top: 6px;
 }
 
@@ -63,46 +67,51 @@ header {
 .metric-spam { color: #fbbf24; }
 .metric-phish { color: #ef4444; }
 
+/* MAIN GRID */
 .layout-main {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 20px;
+  gap: 14px;
+  margin-top: 18px;
 }
 
 .card {
-  background: #1e293b;
-  padding: 16px;
+  background: #0d0d0d;
+  padding: 14px;
   border-radius: 8px;
+  border: 1px solid #1a1a1a;
 }
 
 .card-title {
-  font-size: 16px;
+  font-size: 15px;
   margin-bottom: 10px;
 }
 
+/* HEATMAP */
 .heatmap-grid {
   display: grid;
   grid-template-columns: repeat(25, 1fr);
   gap: 2px;
+  margin-bottom: 10px;
 }
 
 .heatmap-cell {
   width: 100%;
-  padding-top: 100%;
-  background: #0f172a;
+  padding-top: 70%;
+  background: #050505;
   border-radius: 3px;
 }
 
-.level-1 { background: #14532d; }
-.level-2 { background: #166534; }
-.level-3 { background: #15803d; }
-.level-4 { background: #16a34a; }
+.level-1 { background: #1a3d1a; }
+.level-2 { background: #236423; }
+.level-3 { background: #2f8a2f; }
+.level-4 { background: #3fcf3f; }
 
+/* TABLE */
 .scans-scroll {
-  max-height: 300px;
+  max-height: 260px;
   overflow-y: auto;
-  border: 1px solid #334155;
+  border: 1px solid #1a1a1a;
   border-radius: 6px;
 }
 
@@ -112,22 +121,24 @@ header {
 }
 
 .scans-table th {
-  background: #0f172a;
+  background: #050505;
   padding: 8px;
   font-size: 12px;
-  color: #94a3b8;
+  color: #8a8a8a;
 }
 
 .scans-table td {
-  padding: 8px;
-  border-top: 1px solid #334155;
+  padding: 6px 8px;
+  border-top: 1px solid #1a1a1a;
+  font-size: 13px;
 }
 
+/* LABEL PILL */
 .label-pill {
   padding: 4px 8px;
   border-radius: 6px;
   font-size: 12px;
-  color: #0f172a;
+  color: #000;
 }
 
 .label-ham { background: #22c55e; }
@@ -135,6 +146,7 @@ header {
 .label-spam { background: #fbbf24; }
 .label-phishing { background: #ef4444; }
 
+/* EXPORT BUTTONS */
 .export-row {
   margin-top: 12px;
   display: flex;
@@ -142,18 +154,19 @@ header {
 }
 
 .export-btn {
-  background: #0f172a;
-  border: 1px solid #334155;
+  background: #050505;
+  border: 1px solid #333;
   padding: 8px 12px;
   border-radius: 6px;
-  color: #e2e8f0;
+  color: #fff;
   cursor: pointer;
 }
 
+/* MODAL */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.7);
   display: none;
   justify-content: center;
   align-items: center;
@@ -164,10 +177,11 @@ header {
 }
 
 .modal {
-  background: #1e293b;
+  background: #0d0d0d;
   padding: 20px;
   border-radius: 8px;
   width: 420px;
+  border: 1px solid #1a1a1a;
 }
 
 .modal-header {
@@ -183,24 +197,24 @@ header {
 .modal-close {
   background: none;
   border: none;
-  color: #e2e8f0;
+  color: #fff;
   font-size: 24px;
   cursor: pointer;
 }
 
 .modal-meta {
   margin-top: 10px;
-  color: #94a3b8;
+  color: #8a8a8a;
 }
 
 .modal-section-label {
   margin-top: 16px;
   font-size: 14px;
-  color: #cbd5e1;
+  color: #cfcfcf;
 }
 
 .modal-body {
-  background: #0f172a;
+  background: #050505;
   padding: 10px;
   border-radius: 6px;
   margin-top: 6px;
