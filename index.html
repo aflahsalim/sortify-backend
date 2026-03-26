@@ -1,16 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SORTIFY SOC</title>
-
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sortify — Admin</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
-
 <body>
-  <div id="app"></div>
+
+  <!-- Nav -->
+  <nav>
+    <div class="nav-l">
+      <div class="nav-icon">🛡</div>
+      <span class="nav-name">Sortify</span>
+      <span class="nav-sep">/</span>
+      <span class="nav-sub">SOC Dashboard</span>
+    </div>
+    <div class="nav-r">
+      <div class="live-pill">
+        <div class="live-dot" id="live-dot"></div>
+        <span id="live-txt">Live</span>
+      </div>
+      <button class="nav-btn refresh-btn" id="refresh-btn">↻ Refresh</button>
+    </div>
+  </nav>
+
+  <!-- App root — index.js writes into this -->
+  <div class="shell" id="app"></div>
+
+  <!-- Modal — index.js targets these IDs -->
+  <div class="modal-backdrop" id="modal-backdrop">
+    <div class="modal">
+      <div class="modal-hdr">
+        <span class="modal-title">Email details</span>
+        <button class="modal-x" id="modal-close">×</button>
+      </div>
+      <div class="modal-row">
+        <span class="modal-lbl">Meta</span>
+        <span class="modal-val" id="modal-meta"></span>
+      </div>
+      <div class="modal-row">
+        <span class="modal-lbl">Body preview</span>
+        <div class="modal-body-box" id="modal-body"></div>
+      </div>
+      <div class="modal-row">
+        <span class="modal-lbl">Classification</span>
+        <span class="modal-val" id="modal-class"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ApexCharts (used by index.js for trends) -->
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.44.0/dist/apexcharts.min.js"></script>
   <script src="index.js"></script>
 </body>
 </html>
