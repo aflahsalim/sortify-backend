@@ -1,32 +1,22 @@
-// =========================
-//  GLOBAL HELPERS
-// =========================
+const API = "https://sortify-backend-hwf9d0exgqdub9cn.canadacentral-01.azurewebsites.net";
 
 async function fetchJSON(path) {
   const res = await fetch(API + path);
   if (!res.ok) throw new Error("HTTP " + res.status);
   return res.json();
 }
-const scansCache = [];
 
-// =========================
-//  RENDER APP SHELL
-// =========================
+const scansCache = [];
 
 document.getElementById("app").innerHTML = `
   <div class="shell">
     <header>
       <div>
         <div class="title">SORTIFY SOC</div>
-        <div class="subtitle">Neon threat monitoring · Students · Phishing · Spam · Reports</div>
+        <div class="subtitle">Neon threat monitoring · Students · Phishing · Spam</div>
       </div>
       <button class="refresh-btn" id="refresh-btn">Refresh</button>
     </header>
-
-    <div class="alert-banner" id="alert-banner">
-      <div class="alert-icon">!</div>
-      <div id="alert-text"></div>
-    </div>
 
     <section class="grid-metrics">
       <div class="metric-card"><div class="metric-label">Total scans</div><div class="metric-value" id="m-total">-</div></div>
@@ -43,16 +33,12 @@ document.getElementById("app").innerHTML = `
 
       <div class="card">
         <div class="card-title">Trends (last 14 days)</div>
-        <div class="trend-chart" id="trend-chart"></div>
+        <div id="trend-chart"></div>
 
         <div class="card-title" style="margin-top:10px;">Reporting leaderboard</div>
         <table class="leaderboard-table">
-          <thead>
-            <tr><th>Sender</th><th>Scans</th></tr>
-          </thead>
-          <tbody id="leaderboard-body">
-            <tr><td colspan="2" style="color:var(--muted);">No data</td></tr>
-          </tbody>
+          <thead><tr><th>Sender</th><th>Scans</th></tr></thead>
+          <tbody id="leaderboard-body"></tbody>
         </table>
       </div>
     </section>
@@ -65,9 +51,7 @@ document.getElementById("app").innerHTML = `
           <thead>
             <tr><th>Time</th><th>Sender</th><th>Subject</th><th>Label</th><th>Score</th></tr>
           </thead>
-          <tbody id="scans-body">
-            <tr><td colspan="5" style="color:var(--muted);">No scans yet</td></tr>
-          </tbody>
+          <tbody id="scans-body"></tbody>
         </table>
       </div>
 
@@ -79,7 +63,6 @@ document.getElementById("app").innerHTML = `
     </section>
   </div>
 
-  <!-- MODAL -->
   <div class="modal-backdrop" id="modal-backdrop">
     <div class="modal">
       <div class="modal-header">
@@ -88,16 +71,12 @@ document.getElementById("app").innerHTML = `
       </div>
       <div class="modal-meta" id="modal-meta"></div>
       <div class="modal-section-label">Body preview</div>
-      <div class="modal-body" id="modal-body">No content</div>
+      <div class="modal-body" id="modal-body"></div>
       <div class="modal-section-label">Classification</div>
       <div class="modal-meta" id="modal-class"></div>
     </div>
   </div>
 `;
-
-// =========================
-//  METRICS
-// =========================
 
 function setMetrics(stats) {
   document.getElementById("m-total").textContent = stats.total ?? "-";
@@ -106,10 +85,6 @@ function setMetrics(stats) {
   document.getElementById("m-spam").textContent = by.spam || 0;
   document.getElementById("m-phish").textContent = by.phishing || 0;
 }
-
-// =========================
-//  HEATMAP (IMPROVED)
-// =========================
 
 function renderHeatmap(matrix) {
   const container = document.getElementById("heatmap");
@@ -121,7 +96,7 @@ function renderHeatmap(matrix) {
   header.style.display = "flex";
   header.style.justifyContent = "space-between";
   header.style.fontSize = "9px";
-  header.style.color = "var(--muted)";
+  header.style.color = "#94a3b8";
   header.innerHTML = "<span></span><span>0</span><span>6</span><span>12</span><span>18</span><span>23</span>";
   container.appendChild(header);
 
@@ -129,7 +104,7 @@ function renderHeatmap(matrix) {
     const label = document.createElement("div");
     label.textContent = days[d];
     label.style.fontSize = "9px";
-    label.style.color = "var(--muted)";
+    label.style.color = "#94a3b8";
     label.style.display = "flex";
     label.style.alignItems = "center";
     container.appendChild(label);
@@ -150,15 +125,11 @@ function renderHeatmap(matrix) {
   }
 }
 
-// =========================
-//  LEADERBOARD (NO REPORTED)
-// =========================
-
 function renderLeaderboard(rows) {
   const body = document.getElementById("leaderboard-body");
   body.innerHTML = "";
   if (!rows || rows.length === 0) {
-    body.innerHTML = `<tr><td colspan="2" style="color:var(--muted);">No data</td></tr>`;
+    body.innerHTML = `<tr><td colspan="2" style="color:#94a3b8;">No data</td></tr>`;
     return;
   }
   rows.forEach(r => {
@@ -170,11 +141,6 @@ function renderLeaderboard(rows) {
     `;
   });
 }
-
-
-// =========================
-//  TRENDS (IMPROVED)
-// =========================
 
 function renderTrends(trends) {
   const days = trends.days || [];
@@ -199,28 +165,23 @@ function renderTrends(trends) {
     },
     stroke: { width: 3, curve: "smooth" },
     series: [
-      { name: "Phishing", data: phishing, color: "#ff4d6d" },
+      { name: "Phishing", data: phishing, color: "#ef4444" },
       { name: "Spam", data: spam, color: "#fbbf24" },
       { name: "Reported", data: reported, color: "#38bdf8" }
     ],
     xaxis: { categories: days },
-    grid: { borderColor: "#1f2937" }
+    grid: { borderColor: "#334155" }
   };
 
   document.getElementById("trend-chart").innerHTML = "";
   new ApexCharts(document.querySelector("#trend-chart"), options).render();
 }
 
-
-// =========================
-//  RECENT SCANS (SCROLLABLE)
-// =========================
-
 function renderScans(recent) {
   const body = document.getElementById("scans-body");
   body.innerHTML = "";
   if (!recent || recent.length === 0) {
-    body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No scans yet</td></tr>`;
+    body.innerHTML = `<tr><td colspan="5" style="color:#94a3b8;">No scans yet</td></tr>`;
     return;
   }
 
@@ -249,11 +210,6 @@ function renderScans(recent) {
   });
 }
 
-
-// =========================
-//  MODAL (NO REPORTED)
-// =========================
-
 function openModal(idx) {
   const entry = scansCache[idx];
   if (!entry) return;
@@ -277,29 +233,6 @@ document.getElementById("modal-close").addEventListener("click", () => {
   document.getElementById("modal-backdrop").classList.remove("active");
 });
 
-
-// =========================
-//  ALERTS
-// =========================
-
-function renderAlert(alert) {
-  const banner = document.getElementById("alert-banner");
-  const text = document.getElementById("alert-text");
-
-  if (alert.active) {
-    banner.classList.add("active");
-    text.textContent = alert.message;
-  } else {
-    banner.classList.remove("active");
-    text.textContent = "";
-  }
-}
-
-
-// =========================
-//  EXPORT BUTTONS
-// =========================
-
 document.querySelectorAll(".export-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     const label = btn.getAttribute("data-label");
@@ -308,19 +241,13 @@ document.querySelectorAll(".export-btn").forEach(btn => {
   });
 });
 
-
-// =========================
-//  REFRESH ALL
-// =========================
-
 async function refreshAll() {
   try {
-    const [stats, heat, trends, leaderboard, alerts] = await Promise.all([
+    const [stats, heat, trends, leaderboard] = await Promise.all([
       fetchJSON("/dashboard/stats"),
       fetchJSON("/dashboard/heatmap"),
       fetchJSON("/dashboard/trends"),
-      fetchJSON("/dashboard/leaderboard"),
-      fetchJSON("/dashboard/alerts"),
+      fetchJSON("/dashboard/leaderboard")
     ]);
 
     setMetrics(stats);
@@ -328,7 +255,6 @@ async function refreshAll() {
     renderTrends(trends);
     renderLeaderboard(leaderboard.rows || []);
     renderScans(stats.recent || []);
-    renderAlert(alerts);
 
   } catch (e) {
     alert("Could not reach backend. Make sure FastAPI is running.");
