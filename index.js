@@ -7,9 +7,7 @@ async function fetchJSON(path) {
   if (!res.ok) throw new Error("HTTP " + res.status);
   return res.json();
 }
-
 const scansCache = [];
-
 
 // =========================
 //  RENDER APP SHELL
@@ -97,7 +95,6 @@ document.getElementById("app").innerHTML = `
   </div>
 `;
 
-
 // =========================
 //  METRICS
 // =========================
@@ -109,7 +106,6 @@ function setMetrics(stats) {
   document.getElementById("m-spam").textContent = by.spam || 0;
   document.getElementById("m-phish").textContent = by.phishing || 0;
 }
-
 
 // =========================
 //  HEATMAP (IMPROVED)
@@ -153,7 +149,6 @@ function renderHeatmap(matrix) {
     }
   }
 }
-
 
 // =========================
 //  LEADERBOARD (NO REPORTED)
