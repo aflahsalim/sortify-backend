@@ -10,3 +10,4 @@ ipywidgets
 fastapi
 uvicorn
 aiofiles
+sqlite3
